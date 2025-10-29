@@ -1,69 +1,57 @@
-# React + TypeScript + Vite
+# 💧 Water Tracker PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple Progressive Web App for tracking daily water intake with offline storage and notifications.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Offline Storage**: IndexedDB for persistent water logs and settings
+- **PWA Ready**: Installable app with service worker
+- **Smart Notifications**: Configurable water reminders with custom sounds
+- **Customizable**: Adjustable glass sizes (default 250ml) and daily goals
+- **Progress Tracking**: Daily streaks and visual progress indicators
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Install dependencies
+pnpm install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Start development
+pnpm dev
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Build for production
+pnpm build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Tech Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- React 19 + TypeScript
+- Vite + SWC
+- Tailwind CSS
+- IndexedDB
+- PWA with Workbox
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Core Functions
+
+The app provides these IndexedDB functions for frontend integration:
+
+```typescript
+// Database
+await initDB()
+await addWaterLog(glasses: number, customQuantity?: number)
+await getDailyStats(date: string)
+await getWeeklyStats(startDate: string)
+await getCurrentStreak()
+
+// Settings
+await getSettings()
+await updateSettings(newSettings)
+
+// Notifications
+await requestNotificationPermission()
+await initializeReminders()
 ```
+
+## Installation
+
+The app can be installed as a PWA on any device. An install button is available in the settings page.
