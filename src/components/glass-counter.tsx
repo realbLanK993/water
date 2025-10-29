@@ -1,18 +1,89 @@
-import { Check, Info, Plus } from "lucide-react";
-import { useState } from "react";
+import { Check, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { addWaterLog, getSettings, getLastIntakeTime, getDailyStats, getCurrentStreak } from "@/lib/db";
+import { showGoalCompletionNotification, showStreakNotification } from "@/lib/notifications";
 
-export default function GlassCounter({ time }: { time: number }) {
+export default function GlassCounter({ onWaterAdded }: { onWaterAdded?: () => void }) {
   const [count, setCount] = useState(1);
-  // 10 minutes
-  let diff = new Date().getTime() - time;
-  let progress = (diff / (10 * 60 * 1000)) * 100;
+  const [glassSize, setGlassSize] = useState(250);
+  const [selectedQuantity, setSelectedQuantity] = useState(250);
+  const [lastIntakeTime, setLastIntakeTime] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSumbit = () => {
-    console.log("submitting");
+  // Load settings and last intake time on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const settings = await getSettings();
+        setGlassSize(settings.glassSize);
+        setSelectedQuantity(settings.glassSize);
+
+        const lastTime = await getLastIntakeTime();
+        setLastIntakeTime(lastTime);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Calculate cooldown progress
+  const getCooldownProgress = () => {
+    // Skip cooldown in development mode
+    if (import.meta.env.DEV) return 100;
+
+    if (!lastIntakeTime) return 100;
+    const diff = new Date().getTime() - lastIntakeTime;
+    return Math.min(100, (diff / (10 * 60 * 1000)) * 100);
   };
+
+  const handleSubmit = async () => {
+    if (isLoading) return;
+
+    const progress = getCooldownProgress();
+    if (progress < 100) {
+      toast.error("Take a break of 10 minutes before you continue");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await addWaterLog(count, selectedQuantity);
+      toast.success(`Added ${count} ${count === 1 ? 'glass' : 'glasses'} of water (${selectedQuantity * count}ml)!`);
+      setCount(1);
+      setLastIntakeTime(Date.now());
+
+      // Check if daily goal is achieved and show notification
+      const today = new Date().toISOString().split('T')[0];
+      const dailyStats = await getDailyStats(today);
+
+      if (dailyStats.goalAchieved) {
+        await showGoalCompletionNotification();
+
+        // Check for streak milestones
+        const streak = await getCurrentStreak();
+        if (streak > 0 && streak % 7 === 0) { // Show notification every 7 days
+          await showStreakNotification(streak);
+        }
+      }
+
+      // Notify parent component to refresh data
+      if (onWaterAdded) {
+        onWaterAdded();
+      }
+    } catch (error) {
+      console.error('Failed to add water log:', error);
+      toast.error("Failed to add water log. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const quantityOptions = [100, 150, 200, glassSize];
+
   return (
-    <div className="flex flex-col gap-2 justify-center items-center">
+    <div className="flex flex-col gap-4 justify-center items-center">
       <div className="flex flex-col gap-2">
         <small className="text-sm">Number of glasses</small>
         <div className="flex gap-1">
@@ -38,20 +109,34 @@ export default function GlassCounter({ time }: { time: number }) {
             <Plus size={24} />
           </button>
           <button
-            onClick={() => {
-              if (progress >= 100) {
-                handleSumbit();
-              } else {
-                toast.error("Take a break of 10 minutes before you continue");
-              }
-            }}
-            className="bg-primary/10 w-16 md:w-24 flex justify-center items-center rounded-r p-4 text-2xl"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className={`bg-primary/10 w-16 md:w-24 flex justify-center items-center rounded-r p-4 text-2xl ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
           >
             <Check size={24} />
           </button>
         </div>
-        <small className="text-muted-foreground flex gap-2 justify-start items-center">
-          <Info size={14} /> 1 glass of water = 250ml
+      </div>
+
+      {/* Quantity Selection Toggle Boxes */}
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2 justify-between w-full">
+          {quantityOptions.map((quantity) => (
+            <button
+              key={quantity}
+              onClick={() => setSelectedQuantity(quantity)}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${selectedQuantity === quantity
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              {quantity}ml
+            </button>
+          ))}
+        </div>
+        <small className="text-muted-foreground text-center">
+          Total: {selectedQuantity * count}ml
         </small>
       </div>
     </div>

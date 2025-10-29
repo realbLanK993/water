@@ -1,8 +1,9 @@
 import RootLayout from "./components/layout";
-import { AuthProvider } from "./components/provider";
 import { Button } from "./components/ui/button";
 import Home from "./pages/home";
 import SettingsPage from "./pages/settings";
+import { useEffect } from "react";
+import { requestNotificationPermission, initializeReminders } from "./lib/notifications";
 
 const routes = [
   { path: "/", element: <Home /> },
@@ -26,15 +27,25 @@ const NotFound = () => {
 export default function App() {
   const pathname = window.location.pathname;
 
+  useEffect(() => {
+    // Initialize notifications when app starts
+    const initNotifications = async () => {
+      const hasPermission = await requestNotificationPermission();
+      if (hasPermission) {
+        await initializeReminders();
+      }
+    };
+
+    initNotifications();
+  }, []);
+
   return (
-    <AuthProvider>
-      <RootLayout>
-        {routes.find((route) => route.path === pathname) ? (
-          routes.find((route) => route.path === pathname)!.element
-        ) : (
-          <NotFound />
-        )}
-      </RootLayout>
-    </AuthProvider>
+    <RootLayout>
+      {routes.find((route) => route.path === pathname) ? (
+        routes.find((route) => route.path === pathname)!.element
+      ) : (
+        <NotFound />
+      )}
+    </RootLayout>
   );
 }

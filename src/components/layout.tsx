@@ -1,9 +1,4 @@
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  UserButton,
-} from "@clerk/clerk-react";
+
 import { ThemeToggle } from "./theme-toggle";
 
 export function Navbar() {
@@ -21,9 +16,6 @@ export function Navbar() {
 
           <div className="flex gap-4 justify-center items-center">
             <ThemeToggle />
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
           </div>
         </ul>
       </nav>

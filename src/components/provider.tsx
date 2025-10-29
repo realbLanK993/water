@@ -1,28 +1,4 @@
-import { SignedIn, SignedOut, useClerk } from "@clerk/clerk-react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Button } from "./ui/button";
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const clerk = useClerk();
-  return (
-    <>
-      <SignedOut>
-        <div className="flex flex-col gap-4 justify-center items-center min-h-[70vh]">
-          <h2>You are not signed in</h2>
-          <Button
-            onClick={() =>
-              clerk.openSignIn({
-                redirectUrl: window.location.href,
-              })
-            }
-          >
-            Sign in
-          </Button>
-        </div>
-      </SignedOut>
-      <SignedIn>{children}</SignedIn>
-    </>
-  );
-}
 
 // Define the shape of the context's value
 type ThemeProviderState = {

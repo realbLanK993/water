@@ -1,4 +1,4 @@
-import { Crown, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import BadgeDrawer from "./badge-drawer";
 
 export default function SettingsAndBadge() {
